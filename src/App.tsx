@@ -3,16 +3,19 @@
 import React, { useState, useEffect } from 'react';
 import { UserWarning } from './UserWarning';
 import { getTodos, USER_ID } from './api/todos';
-import { Todo } from './types/Todo';
-import { Filter } from './types/Filter';
+import { TodoType } from './types/Todo';
+import { Filter as FilterComponent } from './components/Filter';
 import { ErrorMessage } from './types/AppError';
 import cn from 'classnames';
+import { NewTodo } from './components/NewTodo';
+import { TodoList } from './components/TodoList';
+import { FilterType } from './types/Filter';
 
 export const App: React.FC = () => {
-  const [todos, setTodos] = useState<Todo[]>([]);
+  const [todos, setTodos] = useState<TodoType[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<ErrorMessage>(ErrorMessage.Default);
-  const [filter, setFilter] = useState<Filter>(Filter.All);
+  const [filter, setFilter] = useState<FilterType>(FilterType.All);
 
   useEffect(() => {
     setLoading(true);
@@ -35,9 +38,9 @@ export const App: React.FC = () => {
 
   const visibleTodos = todos.filter(todo => {
     switch (filter) {
-      case Filter.Active:
+      case FilterType.Active:
         return !todo.completed;
-      case Filter.Completed:
+      case FilterType.Completed:
         return todo.completed;
       default:
         return true;
@@ -46,7 +49,7 @@ export const App: React.FC = () => {
 
   const handleFilterChange = (
     event: React.MouseEvent<HTMLAnchorElement>,
-    newFilter: Filter,
+    newFilter: FilterType,
   ) => {
     event.preventDefault();
     setFilter(newFilter);
@@ -65,67 +68,9 @@ export const App: React.FC = () => {
       <h1 className="todoapp__title">todos</h1>
 
       <div className="todoapp__content">
-        <header className="todoapp__header">
-          {/* this button should have `active` class only if all todos are completed */}
-          <button
-            type="button"
-            className="todoapp__toggle-all active"
-            data-cy="ToggleAllButton"
-          />
+        <NewTodo />
 
-          {/* Add a todo on form submit */}
-          <form>
-            <input
-              data-cy="NewTodoField"
-              type="text"
-              className="todoapp__new-todo"
-              placeholder="What needs to be done?"
-            />
-          </form>
-        </header>
-
-        {hasTodos && (
-          <section className="todoapp__main" data-cy="TodoList">
-            {/* This is a completed todo */}
-            {visibleTodos.map(todo => (
-              <div
-                key={todo.id}
-                data-cy="Todo"
-                className={cn('todo', {
-                  completed: todo.completed,
-                })}
-              >
-                <label className="todo__status-label">
-                  <input
-                    data-cy="TodoStatus"
-                    type="checkbox"
-                    className="todo__status"
-                    checked={todo.completed}
-                    readOnly
-                  />
-                </label>
-
-                <span data-cy="TodoTitle" className="todo__title">
-                  {todo.title}
-                </span>
-
-                {/* Remove button appears only on hover */}
-                <button
-                  type="button"
-                  className="todo__remove"
-                  data-cy="TodoDelete"
-                >
-                  ×
-                </button>
-
-                <div data-cy="TodoLoader" className="modal overlay hidden">
-                  <div className="modal-background has-background-white-ter" />
-                  <div className="loader" />
-                </div>
-              </div>
-            ))}
-          </section>
-        )}
+        {hasTodos && <TodoList todos={visibleTodos} />}
 
         {/* overlay will cover the todo while it is being deleted or updated */}
 
@@ -135,46 +80,10 @@ export const App: React.FC = () => {
               {activeCount} items left
             </span>
 
-            <nav className="filter" data-cy="Filter">
-              <a
-                href="#/"
-                className={cn('filter__link', {
-                  selected: filter === Filter.All,
-                })}
-                data-cy="FilterLinkAll"
-                onClick={event => {
-                  handleFilterChange(event, Filter.All);
-                }}
-              >
-                All
-              </a>
-
-              <a
-                href="#/active"
-                className={cn('filter__link', {
-                  selected: filter === Filter.Active,
-                })}
-                data-cy="FilterLinkActive"
-                onClick={event => {
-                  handleFilterChange(event, Filter.Active);
-                }}
-              >
-                Active
-              </a>
-
-              <a
-                href="#/completed"
-                data-cy="FilterLinkCompleted"
-                className={cn('filter__link', {
-                  selected: filter === Filter.Completed,
-                })}
-                onClick={event => {
-                  handleFilterChange(event, Filter.Completed);
-                }}
-              >
-                Completed
-              </a>
-            </nav>
+            <FilterComponent
+              filter={filter}
+              onFilterChange={handleFilterChange}
+            />
 
             <button
               type="button"
