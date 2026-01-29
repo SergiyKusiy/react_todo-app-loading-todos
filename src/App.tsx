@@ -1,6 +1,6 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 /* eslint-disable jsx-a11y/control-has-associated-label */
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserWarning } from './UserWarning';
 import { getTodos, USER_ID } from './api/todos';
 import { Todo } from './types/Todo';
@@ -23,6 +23,10 @@ export const App: React.FC = () => {
       })
       .catch(() => {
         setError(ErrorMessage.LoadTodos);
+
+        setTimeout(() => {
+          setError(ErrorMessage.Default);
+        }, 3000);
       })
       .finally(() => {
         setLoading(false);
@@ -40,9 +44,13 @@ export const App: React.FC = () => {
     }
   });
 
-  const handleFilterChange = useCallback((newFilter: Filter) => {
+  const handleFilterChange = (
+    event: React.MouseEvent<HTMLAnchorElement>,
+    newFilter: Filter,
+  ) => {
+    event.preventDefault();
     setFilter(newFilter);
-  }, []);
+  };
 
   const hasTodos = Boolean(todos.length);
   const activeCount = todos.filter(todo => !todo.completed).length;
@@ -130,8 +138,7 @@ export const App: React.FC = () => {
                 })}
                 data-cy="FilterLinkAll"
                 onClick={event => {
-                  event.preventDefault();
-                  handleFilterChange(Filter.All);
+                  handleFilterChange(event, Filter.All);
                 }}
               >
                 All
@@ -144,8 +151,7 @@ export const App: React.FC = () => {
                 })}
                 data-cy="FilterLinkActive"
                 onClick={event => {
-                  event.preventDefault();
-                  handleFilterChange(Filter.Active);
+                  handleFilterChange(event, Filter.Active);
                 }}
               >
                 Active
@@ -157,9 +163,8 @@ export const App: React.FC = () => {
                 className={cn('filter__link', {
                   selected: filter === Filter.Completed,
                 })}
-                onClick={e => {
-                  e.preventDefault();
-                  handleFilterChange(Filter.Completed);
+                onClick={event => {
+                  handleFilterChange(event, Filter.Completed);
                 }}
               >
                 Completed
