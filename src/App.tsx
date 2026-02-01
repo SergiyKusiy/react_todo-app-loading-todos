@@ -4,21 +4,23 @@ import React, { useState, useEffect } from 'react';
 import { UserWarning } from './UserWarning';
 import { getTodos, USER_ID } from './api/todos';
 import { TodoType } from './types/Todo';
-import { Filter as FilterComponent } from './components/Filter';
 import { ErrorMessage } from './types/AppError';
 import cn from 'classnames';
 import { NewTodo } from './components/NewTodo';
 import { TodoList } from './components/TodoList';
 import { FilterType } from './types/Filter';
+import { Footer } from './components/Footer';
 
 export const App: React.FC = () => {
   const [todos, setTodos] = useState<TodoType[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<ErrorMessage>(ErrorMessage.Default);
   const [filter, setFilter] = useState<FilterType>(FilterType.All);
 
   useEffect(() => {
-    setLoading(true);
+    let timeoutId: number | undefined;
+
+    setIsLoading(true);
 
     getTodos()
       .then(data => {
@@ -27,13 +29,19 @@ export const App: React.FC = () => {
       .catch(() => {
         setError(ErrorMessage.LoadTodos);
 
-        setTimeout(() => {
+        timeoutId = window.setTimeout(() => {
           setError(ErrorMessage.Default);
         }, 3000);
       })
       .finally(() => {
-        setLoading(false);
+        setIsLoading(false);
       });
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
   }, []);
 
   const visibleTodos = todos.filter(todo => {
@@ -75,25 +83,12 @@ export const App: React.FC = () => {
         {/* overlay will cover the todo while it is being deleted or updated */}
 
         {hasTodos && (
-          <footer className="todoapp__footer" data-cy="Footer">
-            <span className="todo-count" data-cy="TodosCounter">
-              {activeCount} items left
-            </span>
-
-            <FilterComponent
-              filter={filter}
-              onFilterChange={handleFilterChange}
-            />
-
-            <button
-              type="button"
-              className="todoapp__clear-completed"
-              data-cy="ClearCompletedButton"
-              disabled={completedCount === 0}
-            >
-              Clear completed
-            </button>
-          </footer>
+          <Footer
+            activeCount={activeCount}
+            completedCount={completedCount}
+            filter={filter}
+            onFilterChange={handleFilterChange}
+          />
         )}
       </div>
 
@@ -115,7 +110,9 @@ export const App: React.FC = () => {
         {error}
       </div>
 
-      <div className={cn('loader', { hidden: !loading })}></div>
+      {isLoading && (
+        <div className={cn('loader', { hidden: !isLoading })}></div>
+      )}
     </div>
   );
 };
